@@ -18,23 +18,22 @@
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
-    <!-- A seção de dependências começa aqui e só deve aparecer uma vez -->
     <dependencies>
-    <!-- Dependência do RabbitMQ -->
-    <dependency>
-        <groupId>com.rabbitmq</groupId>
-        <artifactId>amqp-client</artifactId>
-        <version>5.13.0</version>
-    </dependency>
+        <!-- Dependência do RabbitMQ -->
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>5.13.0</version>
+        </dependency>
 
-    <!-- Dependência para Testes Unitários -->
-    <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>3.8.1</version>
-        <scope>test</scope>
-    </dependency>
-</dependencies>
+        <!-- Dependência para Testes Unitários -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
@@ -57,6 +56,24 @@
                 <configuration>
                     <mainClass>com.consultamedica.Produtor</mainClass>
                 </configuration>
+            </plugin>
+
+            <!-- Plugin para criar o "fat jar" com todas as dependências -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <minimizeJar>false</minimizeJar>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
