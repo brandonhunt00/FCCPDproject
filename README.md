@@ -1,77 +1,147 @@
-# FCCPDproject
-**Sistema de Agendamento Médico com RabbitMQ**
 
-**Descrição do Projeto**
-Este projeto implementa um sistema de agendamento de consultas médicas utilizando RabbitMQ para o envio e recebimento de mensagens. O sistema é composto por três componentes principais:
+# FCCPDproject - Sistema de Mensagens com RabbitMQ
 
-**Produtor de Mensagens (Java):** Responsável por simular médicos agendando consultas.
+## Descrição
 
-**Consumidor de Mensagens (Python):** Representa pacientes que recebem as informações sobre suas consultas agendadas.
+Este projeto implementa um sistema de envio e recebimento de mensagens utilizando o RabbitMQ, composto por três componentes:
 
-**Backend de Auditoria:** Um componente adicional que registra todas as mensagens enviadas para monitoramento e auditoria. O projeto segue uma arquitetura orientada a mensagens, com comunicação assíncrona entre os componentes, utilizando RabbitMQ como broker de mensagens.
+- **Produtor de Mensagens** (Java): responsável por enviar mensagens para a fila.
+- **Consumidor de Mensagens** (Python): responsável por consumir as mensagens da fila.
+- **Backend de Auditoria** (Python): recebe e exibe todas as mensagens enviadas para auditoria.
 
-**Estrutura do Projeto**
-produtor/ - Contém o código em Java responsável pelo envio de mensagens.
-consumidor/ - Contém o código em Python responsável pelo recebimento de mensagens.
-auditoria/ - Backend de auditoria que coleta todas as mensagens enviadas.
+O sistema é configurado para utilizar uma exchange do tipo **topic** e permite a execução de múltiplas instâncias de produtores e consumidores, bem como a auditoria de todas as mensagens.
 
-**Requisitos**
-Java (versão 11 ou superior)
-Python (versão 3.8 ou superior)
-RabbitMQ instalado e em execução localmente ou em um servidor acessível.
-Bibliotecas utilizadas:
-Java: amqp-client
-Python: pika
+## Pré-requisitos
 
-**Instalação e Execução**
-**Configurando RabbitMQ**
-Certifique-se de que o RabbitMQ está em execução. Você pode iniciar o RabbitMQ com o seguinte comando:
+- **RabbitMQ**: Instalar e configurar o RabbitMQ. O servidor RabbitMQ deve estar rodando.
+- **Java** (versão 8 ou superior)
+- **Python** (versão 3.6 ou superior)
+- **Pika** (biblioteca Python para RabbitMQ)
+- **Maven** (para o build do projeto Java)
 
-rabbitmq-server
-O sistema utiliza um exchange do tipo fanout para garantir que várias instâncias de consumidores recebam as mesmas mensagens.
+## Estrutura do Projeto
 
-Produtor (Java)
-Navegue até o diretório produtor/.
+```bash
+FCCPDproject/
+├── backend_auditoria/          # Backend de auditoria em Python
+│   └── backend_auditoria.py
+├── consumidor_python/          # Consumidor de mensagens em Python
+│   └── consumidor.py
+├── produtor_java/              # Produtor de mensagens em Java
+│   └── src/
+│       └── main/
+│           └── java/
+│               └── com/
+│                   └── consultamedica/
+│                       └── Produtor.java
+├── pom.xml                     # Configuração do Maven para o projeto Java
+├── README.md                   # Este arquivo de documentação
+```
 
-Compile o código Java:
-javac -cp .:amqp-client-5.13.0.jar Produtor.java
+## Passo a Passo para Executar
 
-Execute o produtor:
-java -cp .:amqp-client-5.13.0.jar Produtor
-O produtor permite parametrizar os dados da consulta médica que será agendada, como nome do paciente e data/hora da consulta.
+### 1. Clone o Repositório
 
-Consumidor (Python)
-Navegue até o diretório consumidor/.
+Clone o repositório em sua máquina local:
 
-Instale as dependências:
-pip install pika
+```bash
+git clone https://github.com/brandonhunt00/FCCPDproject.git
+cd FCCPDproject
+```
 
-Execute o consumidor:
-python consumidor.py
+### 2. Configurar o RabbitMQ
 
-O consumidor receberá as mensagens enviadas pelo produtor e exibirá as informações da consulta agendada.
+Certifique-se de que o RabbitMQ está instalado e rodando em `localhost` (ou aponte o `host` para onde o RabbitMQ estiver rodando). Para monitorar as filas e exchanges, utilize a interface de gerenciamento do RabbitMQ acessando `http://localhost:15672/` (login padrão: **guest/guest**).
 
-Backend de Auditoria
-Navegue até o diretório auditoria/.
+### 3. Executar o Produtor (Java)
 
-Execute o backend de auditoria:
-python auditoria.py
+1. **Navegue até o diretório do produtor:**
+   ```bash
+   cd produtor_java
+   ```
 
-O backend exibirá todas as mensagens enviadas pelo produtor, registrando as consultas agendadas para fins de auditoria.
+2. **Build do projeto Java:**
+   - Execute o Maven para construir o projeto:
+     ```bash
+     mvn clean package
+     ```
 
-Exemplos de Execução
-**Cenário 1:** Um produtor e mais de um consumidor
-Execute o produtor e duas instâncias do consumidor. Ambos os consumidores receberão as mesmas mensagens enviadas pelo produtor.
+3. **Executar o Produtor:**
+   - Utilize o Maven para executar o produtor:
+     ```bash
+     mvn exec:java
+     ```
 
-**Cenário 2:** Mais de um produtor e mais de um consumidor
-Execute múltiplos produtores e consumidores. Todos os consumidores continuarão a receber as mensagens de todos os produtores, garantindo que o sistema seja escalável e distribua as mensagens corretamente.
+4. **Função do Produtor:**
+   - O produtor enviará mensagens para a exchange `agendamento_consultas`, e você será solicitado a inserir informações como ID do paciente, tipo de solicitação, data e hora da consulta, especialidade médica e detalhes adicionais.
 
-**Composição das Mensagens**
+### 4. Executar o Consumidor (Python)
 
-As mensagens enviadas pelos produtores têm o seguinte formato:
-[dd/MM/yyyy - HH:mm] Médico: Nome_Médico -> Paciente: Nome_Paciente | Data: dd/MM/yyyy HH:mm
+1. **Navegue até o diretório do consumidor:**
+   ```bash
+   cd consumidor_python
+   ```
 
-**Referências:**
-RabbitMQ Documentation
-Biblioteca pika para Python: Pika Documentation
-Biblioteca amqp-client para Java: Java Client for RabbitMQ
+2. **Instalar as dependências:**
+   - Se necessário, ative um ambiente virtual e instale as dependências:
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     pip install pika
+     ```
+
+3. **Executar o Consumidor:**
+   ```bash
+   python3 consumidor.py
+   ```
+
+4. **Função do Consumidor:**
+   - O consumidor escuta as mensagens enviadas para a fila `consulta_fila` e exibe o conteúdo no terminal.
+
+### 5. Executar o Backend de Auditoria (Python)
+
+1. **Navegue até o diretório do backend de auditoria:**
+   ```bash
+   cd backend_auditoria
+   ```
+
+2. **Instalar as dependências:**
+   - Se necessário, ative o ambiente virtual e instale as dependências:
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     pip install pika
+     ```
+
+3. **Executar o Backend de Auditoria:**
+   ```bash
+   python3 backend_auditoria.py
+   ```
+
+4. **Função do Backend:**
+   - O backend de auditoria recebe todas as mensagens da exchange `agendamento_consultas` e exibe o conteúdo para auditoria.
+
+### 6. Menu de Opções (Produtor, Consumidor ou Auditoria)
+
+Foi implementado um menu de opções simples para que o usuário possa escolher se deseja iniciar o **Produtor**, o **Consumidor**, ou o **Backend de Auditoria**:
+
+1. **No terminal, execute:**
+   ```bash
+   python menu_opcoes.py
+   ```
+
+2. **Escolha a opção desejada no menu interativo.**
+
+## Testes e Execução Simultânea
+
+Para testar a execução simultânea de várias instâncias de produtores e consumidores:
+
+- Abra múltiplos terminais e execute os consumidores, auditorias e produtores em cada um.
+- Certifique-se de que os consumidores recebem as mesmas mensagens enviadas, conforme esperado no modo de broadcast.
+
+## Contribuidores
+
+- **Lucas Rosati** - Desenvolvedor
+- **Brandon Hunt** - Desenvolvedor
+- **Sivert Muren** - Desenvolvedor
+- **Anders Burok** - Desenvolvedor
