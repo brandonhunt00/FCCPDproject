@@ -144,4 +144,4 @@ Para testar a execução simultânea de várias instâncias de produtores e cons
 - **Lucas Rosati** - Desenvolvedor
 - **Brandon Hunt** - Desenvolvedor
 - **Sivert Muren** - Desenvolvedor
-- **Anders Burok** - Desenvolvedor
+- **Anders Brurok** - Desenvolvedor
