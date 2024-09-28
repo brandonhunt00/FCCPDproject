@@ -1,28 +1,57 @@
 import pika
 
-# Conectando ao servidor RabbitMQ
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-channel = connection.channel()
+especialidades = [
+    'cardiologista', 'dermatologista', 'pediatra', 'psiquiatra',
+    'ginecologista', 'oncologista', 'geriatra', 'endocrinologista',
+    'urologista', 'oftalmologista'
+]
 
-# Declarando a exchange (deve ser a mesma utilizada pelo produtor)
-exchange_name = 'agendamento_consultas'
-channel.exchange_declare(exchange=exchange_name, exchange_type='topic')
+def main():
+    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    channel = connection.channel()
 
-# Declarando a fila (o RabbitMQ criará uma fila se ela não existir)
-queue_name = 'consulta_fila'
-channel.queue_declare(queue=queue_name, durable=True)
+    while True:
+        # Menu de especialidades
+        print("\nEscolha uma especialidade para filtrar as mensagens:")
+        for i, especialidade in enumerate(especialidades, start=1):
+            print(f"{i}. {especialidade}")
+        print("0. Sair")
 
-# Ligando a fila à exchange com a chave de roteamento usada pelo produtor
-channel.queue_bind(exchange=exchange_name, queue=queue_name, routing_key='#')
+        choice = input("Digite o número da especialidade desejada: ")
 
-print(' [*] Aguardando mensagens. Para sair, pressione CTRL+C')
+        if choice == '0':
+            print("Saindo do programa...")
+            break
 
-# Função chamada sempre que uma mensagem chega
-def callback(ch, method, properties, body):
-    print(f" [x] Recebido: {body.decode()}")
+        try:
+            choice_idx = int(choice) - 1
+            if choice_idx < 0 or choice_idx >= len(especialidades):
+                print("Escolha inválida. Tente novamente.")
+                continue
 
-# Consumindo as mensagens
-channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+            especialidade = especialidades[choice_idx]
+            queue_name = f'consulta_fila_{especialidade.lower()}'
 
-# Iniciando o loop de espera por mensagens
-channel.start_consuming()
+            # Declarar a fila como durável e iniciar a escuta
+            channel.queue_declare(queue=queue_name, durable=True)
+
+            print(f"\nAguardando mensagens para a especialidade: {especialidade}.")
+            print("Digite 'v' para voltar ao menu de especialidades.")
+
+            # Consumindo mensagens da fila
+            while True:
+                method_frame, header_frame, body = channel.basic_get(queue=queue_name, auto_ack=True)
+
+                if method_frame:
+                    print(f"[x] Consulta agendada com sucesso: {body.decode('utf-8')}")
+
+                user_input = input()
+                if user_input.lower() == 'v':
+                    print("\nVoltando ao menu de especialidades...")
+                    break
+
+        except ValueError:
+            print("Entrada inválida. Digite um número.")
+
+if __name__ == "__main__":
+    main()
