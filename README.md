@@ -1,80 +1,61 @@
-# FCCPD Project - Message Queue System with RabbitMQ
+# Projeto de Serviço de Envio e Recebimento de Mensagens
 
-## Project Overview
+## Visão Geral
+Este projeto é uma implementação de um sistema de envio e recebimento de mensagens utilizando RabbitMQ, composto por três principais componentes:
+- *Produtor de Mensagens (Java)*: Envia mensagens relacionadas a agendamentos de consultas médicas.
+- *Consumidor de Mensagens (Python)*: Recebe mensagens de acordo com a especialidade médica escolhida.
+- *Backend de Auditoria (Python)*: Recebe todas as mensagens enviadas, independente da especialidade.
 
-This project is a messaging system utilizing RabbitMQ, composed of three main components:
+O sistema visa demonstrar a utilização de filas e exchanges do RabbitMQ, utilizando o tipo de exchange topic para distribuir mensagens entre diferentes consumidores, de acordo com a especialidade médica.
 
-1. *Producer (Java)*: Responsible for generating medical consultation requests.
-2. *Consumer (Python)*: Filters and receives messages based on chosen medical specialties.
-3. *Audit Backend (Python)*: Receives and logs all messages for auditing purposes.
+## Requisitos
+1. RabbitMQ deve estar instalado e rodando.
+2. O produtor deve ser executado em Java e o consumidor em Python.
 
-The system uses a *Topic Exchange* to distribute messages between consumers and backend audit. This allows consumers to filter messages based on specific routing keys, making the system flexible and efficient.
+### Instalação do RabbitMQ (Windows)
+1. Baixe e instale o RabbitMQ e Erlang.
+2. Adicione o diretório sbin do RabbitMQ às variáveis de ambiente do sistema.
+3. Para iniciar o servidor RabbitMQ, execute rabbitmq-server.bat no terminal.
+4. Acesse o painel do RabbitMQ em http://localhost:15672 (usuário: guest, senha: guest).
 
-## Requirements
+### Instalação do RabbitMQ (MacOS)
+1. Utilize o Homebrew para instalar RabbitMQ: brew install rabbitmq.
+2. Inicie o servidor RabbitMQ: brew services start rabbitmq.
+3. Acesse o painel do RabbitMQ em http://localhost:15672 (usuário: guest, senha: guest).
 
-- *Java* for the producer (Produtor.java)
-- *Python 3* with pika library for the consumers (consumer.py and backend_audit.py)
-- *RabbitMQ* running locally
+## Como Rodar o Projeto
+### 1. Backend de Auditoria
+- Navegue até o diretório backend_auditoria e execute o comando:
+  sh
+  python3 backend_auditoria.py
+  
+  Isso iniciará o backend de auditoria, que receberá todas as mensagens enviadas pelo produtor.
 
-### Setting Up
+### 2. Consumidor de Mensagens
+- Navegue até o diretório consumidor_python e execute:
+  sh
+  python3 consumidor.py
+  
+  Escolha a especialidade médica para escutar as mensagens específicas dessa fila.
 
-1. *Install RabbitMQ* on your system. Make sure it is running:
-   - For Windows: Start RabbitMQ from the command line using rabbitmq-server.bat.
-   - For macOS: Use brew services start rabbitmq.
+### 3. Produtor de Mensagens
+- Navegue até o diretório produtor_java e execute o comando Maven:
+  sh
+  mvn exec:java -Dexec.mainClass="com.consultamedica.Produtor"
+  
+  Preencha as informações solicitadas (ID do paciente, tipo de solicitação, data e hora da consulta, especialidade médica e detalhes adicionais).
 
-2. *Install Dependencies*:
-   - Python library: Install pika using:
-     sh
-     pip install pika
-     
-   - Java dependencies for the producer: The producer requires RabbitMQ's Java Client. This is managed via Maven.
+## Estrutura do Código
+### 1. Produtor (Java)
+- *Envio de Mensagens Persistentes*: As mensagens enviadas são marcadas como persistentes para garantir que sejam consumidas mesmo se não houver consumidores disponíveis no momento do envio.
+- *Exchange*: Utilizamos uma exchange do tipo topic para que cada mensagem seja roteada para filas específicas baseadas na chave de roteamento.
 
-3. *Configure RabbitMQ*:
-   - Make sure the exchange agendamento_consultas is created in RabbitMQ as *durable* and of type *topic*.
-   - Bind queues to the exchange with appropriate routing keys:
-     - For each medical specialty (e.g., consulta_fila_cardiologista), bind with nova_consulta.<specialty>.
-     - Bind the audit queue (auditoria_fila) with the routing key # to receive all messages.
+### 2. Consumidor (Python)
+- *Filtragem por Especialidade*: O consumidor permite escolher uma especialidade médica e escutar apenas as mensagens dessa categoria.
+- *Persistência*: A fila também é marcada como durável para garantir que as mensagens fiquem disponíveis até serem consumidas.
 
-### Running the System
+### 3. Backend de Auditoria (Python)
+- *Recepção de Todas as Mensagens*: O backend de auditoria recebe todas as mensagens, independentemente da especialidade, para fins de monitoramento.
 
-1. *Start the Producer*:
-   - Navigate to the produtor_java directory.
-   - Run the producer using Maven:
-     sh
-     mvn exec:java -Dexec.mainClass="com.consultamedica.Produtor"
-     
-
-2. *Start Consumers*:
-   - For the consumer that filters messages based on a specialty, run:
-     sh
-     python3 consumidor.py
-     
-   - Choose the desired specialty from the menu to start listening for messages of that type.
-   - To return to the menu, use ctrl+c.
-
-3. *Start the Audit Backend*:
-   - To monitor all messages, run the backend audit consumer:
-     sh
-     python3 backend_auditoria.py
-     
-
-### Usage Flow
-
-- *Producer* sends messages with a specific routing key (e.g., nova_consulta.cardiologista). The messages are routed to queues bound with matching keys.
-- *Consumer* subscribes to a specific queue and receives messages as they are published.
-- *Audit Backend* receives all messages for logging purposes.
-
-### Important Notes
-
-- Ensure RabbitMQ server is always running when executing the producer or consumers.
-- Messages are persistent, meaning they will be saved in queues even if consumers are not connected at the time of message delivery.
-
-### Project Structure
-
-- produtor_java/ - Contains Produtor.java (Java code for producing messages).
-- consumidor_python/ - Contains consumer.py (Python consumer for receiving messages).
-- backend_auditoria/ - Contains backend_auditoria.py (Python backend audit for receiving all messages).
-
-### License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Justificativa para o Uso do topic Exchange
+Utilizamos a exchange do tipo topic porque ela permite maior flexibilidade no roteamento das mensagens. Dessa forma, podemos definir diferentes padrões de chave de roteamento, garantindo que as mensagens cheguem apenas aos consumidores corretos. Isso facilita o processo de gerenciamento das filas por especialidade médica e permite adicionar novas especialidades no futuro sem alterar a lógica principal do produtor ou dos consumidores.
