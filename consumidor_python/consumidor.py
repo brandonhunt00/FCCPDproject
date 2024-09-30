@@ -3,12 +3,10 @@ import sys
 import time
 
 def main():
-    # Definindo as especialidades médicas disponíveis
     especialidades = ['cardiologista', 'dermatologista', 'pediatra', 'psiquiatra', 'ginecologista',
                       'oncologista', 'geriatra', 'endocrinologista', 'urologista', 'pneumologista', 'oftalmologista']
 
     while True:
-        # Exibindo o menu de especialidades para o usuário escolher
         print("\nEscolha uma especialidade para filtrar as mensagens:")
         for i, especialidade in enumerate(especialidades, start=1):
             print(f"{i}. {especialidade}")
@@ -16,7 +14,6 @@ def main():
 
         escolha = input("Digite o número da especialidade desejada: ")
 
-        # Encerrando o programa caso o usuário escolha "0"
         if escolha == '0':
             print("Saindo...")
             break
@@ -29,11 +26,9 @@ def main():
 
                 while True:
                     try:
-                        # Conectando ao RabbitMQ
                         connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
                         channel = connection.channel()
 
-                        # Declarando a fila e aguardando as mensagens
                         print(f"\nAguardando mensagens para a especialidade: {especialidade}.")
                         print("Pressione 'ctrl+c' para voltar ao menu")
 
